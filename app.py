@@ -1,4 +1,11 @@
 import streamlit as st
+import matplotlib
+# Use a non-interactive backend for headless deployments (prevents errors when no GUI is available)
+try:
+    matplotlib.use('Agg')
+except Exception:
+    # If backend can't be set, continue; pyplot import may still work depending on environment
+    pass
 import matplotlib.pyplot as plt
 import numpy as np
 import time
@@ -184,14 +191,27 @@ def main():
                        unsafe_allow_html=True)
             
             with st.container():
-                    plt.style.use('ggplot')  # Un style intégré à matplotlib
-                    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-                    axes = axes.flatten()
-                
-                    # Configuration supplémentaire pour améliorer l'apparence
-                    for ax in axes:
-                        ax.grid(True, alpha=0.3)
-                        ax.set_facecolor('#f8f9fa')
+                # Configure plotting style: prefer seaborn if available, otherwise fall back to a
+                # built-in matplotlib style to avoid crashing when a style is unavailable.
+                try:
+                    import seaborn as sns
+                    sns.set_style("whitegrid")
+                    sns.set_palette("husl")
+                except Exception:
+                    # If seaborn isn't available or fails for any reason, use a safe matplotlib style
+                    try:
+                        plt.style.use('ggplot')
+                    except Exception:
+                        # As a final fallback use the default style
+                        plt.style.use('default')
+
+                fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+                axes = axes.flatten()
+
+                # Configuration supplémentaire pour améliorer l'apparence
+                for ax in axes:
+                    ax.grid(True, alpha=0.3)
+                    ax.set_facecolor('#f8f9fa')
             
             for idx, (name, result) in enumerate(results.items()):
                 plot_solution(problem, result['solution'], 
